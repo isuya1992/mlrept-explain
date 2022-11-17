@@ -66,6 +66,9 @@ class DecompositionReporter(BaseReporter):
         self.kde_kw = kde_kw
         self.scatter_kw = scatter_kw
 
+        self.X_train: Optional[DataFrame] = None
+        self.y_train: Optional[Series] = None
+
     @property
     def feature_names(self) -> list[str]:
         if self.feature_name_map is None:
@@ -77,6 +80,10 @@ class DecompositionReporter(BaseReporter):
             ]
         return feature_names
 
+    def fit(self, X: DataFrame, y: Optional[Series], **kwargs):
+        BaseReporter.fit(self, X, y)
+        self.model.fit(self.X_train, self.y_train, **kwargs)
+
     def show(
         self,
         name: str,
@@ -87,7 +94,6 @@ class DecompositionReporter(BaseReporter):
         **kwargs
     ):
         """Plot and show some figures to understand the given data using decomposition."""
-
         fig_kw = kwargs or dict()
 
         showing_idx = _get_showing_decomp_axis_idx(self, target_decomp_axes)
@@ -182,6 +188,15 @@ class DecompositionReporter(BaseReporter):
         plt.show()
         plt.close(fig)
 
+    def show_train(
+        self,
+        name: str,
+        target_decomp_axes: str | int | list[int] = "all",
+        y_order: Optional[Sequence[str] | Callable] = None,
+        **kwargs
+    ):
+        self.show(name, self.X_train, self.y_train, target_decomp_axes, y_order, **kwargs)
+
     def compare(
         self,
         name: str,
@@ -200,6 +215,18 @@ class DecompositionReporter(BaseReporter):
         y_all = pd.concat((y1_seri, y2_seri), axis="index", ignore_index=True)
 
         self.show(name, X_all, y_all, target_decomp_axes, y_order=dataset_names, **kwargs)
+
+    def compare_train(
+        self,
+        name: str,
+        X_test: DataFrame,
+        dataset_name: Optional[str] = None,
+        target_decomp_axes: str | int | list[int] = "all",
+        **kwargs
+    ):
+        dataset_name = dataset_name or "test"
+        dataset_names = ("train", dataset_name)
+        self.compare(name, self.X_train, X_test, dataset_names, target_decomp_axes)
 
     def axis_idx(self) -> Series:
         seri = pd.Series(np.arange(0, self.model.n_components_))

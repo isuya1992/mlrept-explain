@@ -18,20 +18,18 @@ class BaseReporter(metaclass=ABCMeta):
         """Abstract method which offers visualization of data"""
         ...
 
-    def set_train_data(self, X: DataFrame, y: Optional[Series], copy: bool = False):
-        self.X_train = X
-        self.y_train = y
-
-        if copy:
-            self.X_train = self.X_train.copy()
-            if self.y_train is not None:
-                self.y_train = self.y_train.copy()
+    def fit(self, X: DataFrame, y: Series):
+        self.X_train = X.copy()
+        self.y_train = y.copy()
 
 class TrainedDecompositionProtocol(Protocol):
     """Protocol of trained scikit-learn decomposition objects"""
     components_: ArrayLike
     n_components_: int
     feature_names_in_: list[str]
+
+    def fit(self, X, y=None):
+        ...
 
     def transform(self, X, y=None):
         ...
