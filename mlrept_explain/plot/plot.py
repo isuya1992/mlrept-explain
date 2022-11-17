@@ -3,12 +3,14 @@ from .._typing import Axes, DataFrame
 
 import numpy as np
 
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import seaborn as sns
 
 
 __all__ = [
     "histplot",
     "kdeplot",
+    "scatterplot",
     "barplot",
     "barplot_color_by_sign",
 ]
@@ -66,6 +68,37 @@ def kdeplot(
     ax.set_axisbelow(True)
     ax.set_title(title)
     ax.set_xlabel(x)
+
+def scatterplot(
+    ax: Axes,
+    df: DataFrame,
+    x: str,
+    y: str,
+    bins: int = 20,
+    title: Optional[str] = None,
+    **kwargs
+):
+    kwargs = kwargs or dict()
+    kwargs.setdefault("fill", True)
+
+    x_seri = df[x]
+    y_seri = df[y]
+
+    ax.scatter(x_seri, y_seri)
+    divider = make_axes_locatable(ax)
+    ax_histx = divider.append_axes("top", 0.5, pad=0.1, sharex=ax)
+    ax_histy = divider.append_axes("right", 0.5, pad=0.1, sharey=ax)
+    ax_histx.hist(x_seri, bins=bins, rwidth=0.9)
+    ax_histy.hist(y_seri, bins=bins, rwidth=0.9, orientation='horizontal')
+    ax_histx.xaxis.set_tick_params(labelbottom=False)
+    ax_histy.yaxis.set_tick_params(labelleft=False)
+
+    ax.grid(visible=True, axis="both")
+    ax.set_axisbelow(True)
+    ax.set_title(title, pad=0.7*72)  # Convert inch to point.
+    ax.set_xlabel(x)
+    ax.set_ylabel(y)
+
 
 def barplot(
     ax: Axes,

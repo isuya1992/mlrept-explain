@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from ..base import BaseReporter, TrainedDecompositionProtocol
-from ..plot.plot import histplot, kdeplot, barplot_color_by_sign
+from ..plot import histplot, kdeplot, barplot_color_by_sign, scatterplot
 
 
 __all__ = [
@@ -15,12 +15,17 @@ __all__ = [
 ]
 
 
-def _get_figsize(ncols: int, nrows: int) -> tuple[float, float]:
+def _get_figsize(ncols: int, nrows: int, square: bool = False) -> tuple[float, float]:
     defalut_figsize = plt.rcParams["figure.figsize"]
     sizex, sizey = defalut_figsize
-    sizex = ncols * sizex
-    sizey = nrows * sizey
-    return sizex, sizey
+
+    out_sizex = ncols * sizex
+    if square:
+        out_sizey = nrows * sizex
+    else:
+        out_sizey = nrows * sizey
+
+    return out_sizex, out_sizey
 
 
 def _get_showing_decomp_axis_idx(reporter, target_decomp_axes: str | int | list[int]) -> list[int]:
@@ -48,6 +53,7 @@ class DecompositionReporter(BaseReporter):
         bar_kw: Optional[dict[str, Any]] = None,
         hist_kw: Optional[dict[str, Any]] = None,
         kde_kw: Optional[dict[str, Any]] = None,
+        scatter_kw: Optional[dict[str, Any]] = None,
     ):
         BaseReporter.__init__(self)
         self.model = model
@@ -58,6 +64,7 @@ class DecompositionReporter(BaseReporter):
         self.bar_kw = bar_kw
         self.hist_kw = hist_kw
         self.kde_kw = kde_kw
+        self.scatter_kw = scatter_kw
 
     @property
     def feature_names(self) -> list[str]:
@@ -99,8 +106,8 @@ class DecompositionReporter(BaseReporter):
             fig, ax_arr = plt.subplots(nrows, ncols, **fig_kw)
 
             ax_arr = ax_arr.ravel()
-
             df_comp = self._listup_axis_comp()
+
             for i in np.arange(ncols * nrows):
                 ax = ax_arr[i]
                 try:
@@ -114,7 +121,6 @@ class DecompositionReporter(BaseReporter):
 
                 barplot_color_by_sign(ax, df_comp_curr, "value", title=f"Component: (axis: {id_})")
                 ax.set_xlim(-1.05, 1.05)
-
         elif name == "dist":
             if (X is None) or (y is None):
                 raise ValueError("Missing X or y in args")
@@ -142,7 +148,32 @@ class DecompositionReporter(BaseReporter):
                 df_proj_curr = df_proj.query("axis_id == @id_")
                 histplot(ax1, df_proj_curr, "value", title=f"Histgram: (axis: {id_})", hue=hue, hue_order=y_order, **hist_kw)
                 kdeplot(ax2, df_proj_curr, "value", title=f"Distribution: (axis: {id_})", hue=hue, hue_order=y_order, **kde_kw)
+        elif name == "scatter":
+            if (X is None) or (y is None):
+                raise ValueError("Missing X or y in args")
 
+            nrows, remainder = divmod(len(showing_idx), ncols)
+            if remainder > 0:
+                nrows += 1
+
+            fig_kw.setdefault("figsize", _get_figsize(ncols, nrows, square=True))
+            fig_kw.setdefault("sharex", True)
+            fig, ax_arr = plt.subplots(nrows, ncols, **fig_kw)
+
+            ax_arr = ax_arr.ravel()
+            df_proj = self._listup_proj(X, y)
+            scatter_kw = self.scatter_kw or dict()
+
+            for i in np.arange(ncols * nrows):
+                ax = ax_arr[i]
+                try:
+                    id_ = showing_idx[i]
+                except KeyError:
+                    ax.axis("off")
+                    break
+
+                df_proj_curr = df_proj.query("axis_id == @id_")
+                scatterplot(ax, df_proj_curr, "value", y.name, title=f"Scatter Plot: (axis: {id_})", **scatter_kw)
         else:
             raise ValueError(f"Invalid name: {name}")
 
