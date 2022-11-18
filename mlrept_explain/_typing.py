@@ -8,4 +8,5 @@ DataFrame = pd.DataFrame
 Series = pd.DataFrame
 
 # matplotlib type alias
+Figure = plt.Figure
 Axes = plt.Axes

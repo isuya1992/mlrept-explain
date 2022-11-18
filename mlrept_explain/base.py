@@ -1,4 +1,4 @@
-from typing import Protocol, Optional
+from typing import Protocol
 from numpy.typing import ArrayLike
 from ._typing import DataFrame, Series
 
@@ -14,13 +14,10 @@ __all__ = [
 
 class BaseReporter(metaclass=ABCMeta):
     @abstractmethod
-    def show(self, name: str, X: DataFrame, y: Optional[Series], **kwargs):
+    def show(self, name: str, **kwargs):
         """Abstract method which offers visualization of data"""
         ...
 
-    def fit(self, X: DataFrame, y: Series):
-        self.X_train = X.copy()
-        self.y_train = y.copy()
 
 class TrainedDecompositionProtocol(Protocol):
     """Protocol of trained scikit-learn decomposition objects"""

@@ -74,6 +74,7 @@ def scatterplot(
     df: DataFrame,
     x: str,
     y: str,
+    hue: Optional[str] = None,
     bins: int = 20,
     title: Optional[str] = None,
     **kwargs
