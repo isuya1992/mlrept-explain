@@ -6,7 +6,7 @@ import pandas as pd
 
 import matplotlib.pyplot as plt
 
-from ..base import BaseReporter, TrainedDecompositionProtocol
+from ..base import BaseReporter, TrainedDecompositionProtocol, ComparableProtocol
 from ..plot import barplot_color_by_sign, histplot, kdeplot, scatterplot
 from .._exception import NotFittedError
 
@@ -173,7 +173,7 @@ class DecompositionReporter(BaseReporter):
         return df
 
 
-class DecompositionReporterForClassification(DecompositionReporter):
+class DecompositionReporterForClassification(DecompositionReporter, ComparableProtocol):
     available_plot_names = ["dist"] + DecompositionReporter.available_plot_names
 
     """Class which offers visualization of classification dataset by dimension reduction"""
